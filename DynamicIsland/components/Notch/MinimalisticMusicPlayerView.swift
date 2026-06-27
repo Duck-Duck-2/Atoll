@@ -109,34 +109,38 @@ struct MinimalisticMusicPlayerView: View {
                         }
                     }
                 }
-                .frame(height: 50)
+                .frame(height: MinimalisticMusicPlayerLayoutMetrics.headerHeight)
                 
                 // Compact progress bar
                 progressBar
-                    .padding(.top, 6)
+                    .frame(height: MinimalisticMusicPlayerLayoutMetrics.progressBarHeight, alignment: .center)
+                    .padding(.top, MinimalisticMusicPlayerLayoutMetrics.progressBarTopPadding)
                     .clipped()
                 
                 // Compact playback controls
                 if shouldShowControlHUDRow {
                     controlHUDRow
-                        .padding(.top, 4)
+                        .frame(height: MinimalisticMusicPlayerLayoutMetrics.playbackControlsHeight, alignment: .center)
+                        .padding(.top, MinimalisticMusicPlayerLayoutMetrics.playbackControlsTopPadding)
                 } else {
                     playbackControls
-                        .padding(.top, 4)
+                        .frame(height: MinimalisticMusicPlayerLayoutMetrics.playbackControlsHeight, alignment: .center)
+                        .padding(.top, MinimalisticMusicPlayerLayoutMetrics.playbackControlsTopPadding)
                 }
 
                 if enableLyrics {
                     lyricsView
-                        .padding(.top, 10)
+                        .frame(height: MusicLyricsLayoutMetrics.minimalisticOpenReservedTextHeight, alignment: .top)
+                        .padding(.top, MusicLyricsLayoutMetrics.minimalisticOpenTopPadding)
                 }
 
                 timerCountdownSection
 
                 reminderList
             }
-            .padding(.horizontal, shouldUseDynamicIslandMode(for: vm.screen) ? -4 : 12)
-            .padding(.top, shouldUseDynamicIslandMode(for: vm.screen) ? 14 : 6)
-            .padding(.bottom, shouldUseDynamicIslandMode(for: vm.screen) ? 14 : ReminderLiveActivityManager.baselineMinimalisticBottomPadding)
+            .padding(.horizontal, isDynamicIslandMode ? -4 : 12)
+            .padding(.top, MinimalisticMusicPlayerLayoutMetrics.topPadding(isDynamicIslandMode: isDynamicIslandMode))
+            .padding(.bottom, MinimalisticMusicPlayerLayoutMetrics.bottomPadding(isDynamicIslandMode: isDynamicIslandMode))
             .frame(maxWidth: .infinity)
             .frame(height: calculateDynamicHeight(), alignment: .top)
             .animation(.smooth(duration: 0.3), value: dynamicHeightSignature)
@@ -218,6 +222,10 @@ struct MinimalisticMusicPlayerView: View {
         coordinator.timerLiveActivityEnabled && timerManager.isExternalTimerActive
     }
 
+    private var isDynamicIslandMode: Bool {
+        shouldUseDynamicIslandMode(for: vm.screen)
+    }
+
     private var brandAccentColor: Color {
         musicManager.brandAccentColor
     }
@@ -250,19 +258,11 @@ struct MinimalisticMusicPlayerView: View {
     }
 
     private func calculateDynamicHeight() -> CGFloat {
-        var height: CGFloat = 50 // Base height for header
-
-        // Add progress bar height
-        height += 6 + 4 // progress bar + top padding
-
-        // Add playback controls height
-        height += 54 + 2 // controls + top padding
+        var height = MinimalisticMusicPlayerLayoutMetrics.baseOpenHeight(isDynamicIslandMode: isDynamicIslandMode)
 
         // Add lyrics height if enabled in settings (reserve space even while loading)
         if enableLyrics {
-            let lyricsTopPadding: CGFloat = 10
-            let lyricsEstimatedHeight: CGFloat = 34
-            height += lyricsTopPadding + lyricsEstimatedHeight
+            height += MinimalisticMusicPlayerLayoutMetrics.lyricsHeight
         }
 
         if shouldShowTimerCountdown {
@@ -273,11 +273,6 @@ struct MinimalisticMusicPlayerView: View {
         if shouldShowReminderList {
             height += reminderListHeight
         }
-
-        // Add padding
-        let isDynamicIsland = shouldUseDynamicIslandMode(for: vm.screen)
-        height += isDynamicIsland ? 14 : 15 // top padding
-        height += isDynamicIsland ? 14 : ReminderLiveActivityManager.baselineMinimalisticBottomPadding
 
         return height
     }
@@ -352,18 +347,23 @@ struct MinimalisticMusicPlayerView: View {
             removal: .move(edge: .top).combined(with: .opacity)
         )
 
-        return HStack(spacing: 6) {
+        return HStack(alignment: .top, spacing: 6) {
             if !line.isEmpty {
                 Image(systemName: "music.note")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white.opacity(0.7))
                     .symbolRenderingMode(.monochrome)
 
-                Text(line)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.88))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
+                TwoLineFittingText(
+                    text: line,
+                    fontSize: MusicLyricsLayoutMetrics.minimalisticOpenFontSize,
+                    minimumFontSize: MusicLyricsLayoutMetrics.minimalisticOpenMinimumFontSize,
+                    weight: MusicLyricsLayoutMetrics.minimalisticOpenWeight,
+                    nsWeight: MusicLyricsLayoutMetrics.minimalisticOpenNSWeight,
+                    textColor: .white.opacity(0.88),
+                    alignment: .topLeading,
+                    multilineTextAlignment: .leading
+                )
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.trailing, 6)
                     .id(line)
@@ -371,7 +371,8 @@ struct MinimalisticMusicPlayerView: View {
             }
         }
         .padding(.horizontal, 6)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(height: MusicLyricsLayoutMetrics.minimalisticOpenReservedTextHeight, alignment: .top)
         .animation(.smooth(duration: 0.32), value: line)
     }
     
